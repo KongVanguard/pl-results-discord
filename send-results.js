@@ -1,4 +1,3 @@
-```js
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -10,7 +9,6 @@ async function main() {
   const { data } = await axios.get(PAGE_URL);
 
   const $ = cheerio.load(data);
-
   const text = $("body").text();
 
   const recentOnly =
@@ -24,7 +22,6 @@ async function main() {
     /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/gs;
 
   const matches = [];
-
   let match;
 
   while ((match = regex.exec(recentOnly)) !== null) {
@@ -37,7 +34,6 @@ async function main() {
 
   const latestMatches = matches.slice(0, 10);
 
-  // ONLY POST IF MATCHES EXIST
   if (latestMatches.length === 0) {
     return;
   }
@@ -53,4 +49,3 @@ async function main() {
 }
 
 main();
-```
