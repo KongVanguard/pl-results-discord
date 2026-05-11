@@ -1,27 +1,45 @@
-name: Daily Premier League Results
+```yml
+name: Daily Football Results
 
 on:
   schedule:
-    - cron: "30 22 * * *"
+    - cron: "0 17 * * *"
   workflow_dispatch:
 
 jobs:
-  send-results:
+  premier-league:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install packages
-        run: npm install
+      - run: npm install
 
-      - name: Send Discord message
-        run: node send-results.js
+      - run: node send_results.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          COMPETITION_URL: "https://native-stats.org/competition/PL/"
+          COMPETITION_NAME: "Premier League"
+
+  world-cup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+
+      - run: node send_results.js
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          COMPETITION_URL: "https://native-stats.org/competition/WC/"
+          COMPETITION_NAME: "World Cup"
+```
