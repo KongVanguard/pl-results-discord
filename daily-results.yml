@@ -6,8 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  premier-league:
+  send-results:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        competition:
+          - name: Premier League
+            url: https://native-stats.org/competition/PL/
+          - name: World Cup
+            url: https://native-stats.org/competition/WC/
+          - name: Champions League
+            url: https://native-stats.org/competition/CL/
 
     steps:
       - uses: actions/checkout@v4
@@ -18,44 +28,9 @@ jobs:
 
       - run: npm install
 
-      - run: node send-results.js
+      - name: Send Discord message
+        run: node send-results.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/PL/"
-          COMPETITION_NAME: "Premier League"
-
-  world-cup:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: npm install
-
-      - run: node send-results.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/WC/"
-          COMPETITION_NAME: "World Cup"
-
-  champions-league:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: npm install
-
-      - run: node send-results.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/CL/"
-          COMPETITION_NAME: "Champions League"
+          COMPETITION_NAME: ${{ matrix.competition.name }}
+          COMPETITION_URL: ${{ matrix.competition.url }}
