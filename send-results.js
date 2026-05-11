@@ -39,7 +39,9 @@ async function main() {
 
   if (!recentOnly) {
     if (MANUAL_RUN) {
-      await sendMessage(`✅ ${COMPETITION_NAME} checker ran successfully.\nNo recent match section found.`);
+      await sendMessage(
+        `✅ ${COMPETITION_NAME} checker ran successfully.\nNo recent match section found.`
+      );
     }
     return;
   }
@@ -57,14 +59,34 @@ async function main() {
 
     const home = match[2].trim();
     const away = match[3].trim();
-    const score = match[4].replace(":", "–");
 
-    matches.push(`• ${home} **${score}** ${away}`);
+    const [homeGoals, awayGoals] = match[4]
+      .split(":")
+      .map(Number);
+
+    const score = `${homeGoals}–${awayGoals}`;
+
+    let homeEmoji = "⚪";
+    let awayEmoji = "⚪";
+
+    if (homeGoals > awayGoals) {
+      homeEmoji = "🟢";
+      awayEmoji = "🔴";
+    } else if (awayGoals > homeGoals) {
+      homeEmoji = "🔴";
+      awayEmoji = "🟢";
+    }
+
+    matches.push(
+      `${homeEmoji} **${home}** ${score} **${away}** ${awayEmoji}`
+    );
   }
 
   if (matches.length === 0) {
     if (MANUAL_RUN) {
-      await sendMessage(`✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found today (${today}).`);
+      await sendMessage(
+        `✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found today (${today}).`
+      );
     }
     return;
   }
