@@ -5,6 +5,10 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const PAGE_URL = process.env.COMPETITION_URL;
 const COMPETITION_NAME = process.env.COMPETITION_NAME;
 
+if (!PAGE_URL) {
+  throw new Error("Missing COMPETITION_URL");
+}
+
 async function main() {
   const { data } = await axios.get(PAGE_URL);
 
@@ -14,9 +18,7 @@ async function main() {
   const recentOnly =
     text.split("Recent matches:")[1]?.split("Next matches:")[0];
 
-  if (!recentOnly) {
-    return;
-  }
+  if (!recentOnly) return;
 
   const regex =
     /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/gs;
@@ -34,9 +36,7 @@ async function main() {
 
   const latestMatches = matches.slice(0, 10);
 
-  if (latestMatches.length === 0) {
-    return;
-  }
+  if (latestMatches.length === 0) return;
 
   const message =
     `🏆 **${COMPETITION_NAME} Results**\n\n` +
