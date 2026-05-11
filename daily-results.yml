@@ -18,7 +18,7 @@ jobs:
 
       - run: npm install
 
-      - run: node send_results.js
+      - run: node send-results.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           COMPETITION_URL: "https://native-stats.org/competition/PL/"
@@ -36,7 +36,7 @@ jobs:
 
       - run: npm install
 
-      - run: node send_results.js
+      - run: node send-results.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           COMPETITION_URL: "https://native-stats.org/competition/WC/"
@@ -54,7 +54,7 @@ jobs:
 
       - run: npm install
 
-      - run: node send_results.js
+      - run: node send-results.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           COMPETITION_URL: "https://native-stats.org/competition/CL/"
