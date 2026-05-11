@@ -5,50 +5,45 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const PAGE_URL = process.env.COMPETITION_URL;
 const COMPETITION_NAME = process.env.COMPETITION_NAME;
 
-if (!DISCORD_WEBHOOK_URL) {
-  throw new Error("Missing DISCORD_WEBHOOK_URL");
-}
+if (!DISCORD_WEBHOOK_URL) throw new Error("Missing DISCORD_WEBHOOK_URL");
+if (!PAGE_URL) throw new Error("Missing COMPETITION_URL");
+if (!COMPETITION_NAME) throw new Error("Missing COMPETITION_NAME");
 
-if (!PAGE_URL) {
-  throw new Error("Missing COMPETITION_URL");
-}
-
-if (!COMPETITION_NAME) {
-  throw new Error("Missing COMPETITION_NAME");
+function cleanTeamName(team) {
+  return team
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b[A-Z]{2,4}\b/g, "")
+    .trim();
 }
 
 async function main() {
   const { data } = await axios.get(PAGE_URL);
-
   const $ = cheerio.load(data);
-  const text = $("body").text();
 
-  const recentOnly =
-    text.split("Recent matches:")[1]?.split("Next matches:")[0];
+  const text = $("body").text().replace(/\s+/g, " ");
 
-  if (!recentOnly) {
-    return;
-  }
+  const recentOnly = text.split("Recent matches:")[1]?.split("Next matches:")[0];
+
+  if (!recentOnly) return;
 
   const regex =
-    /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/gs;
+    /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/g;
 
   const matches = [];
   let match;
 
   while ((match = regex.exec(recentOnly)) !== null) {
-    const home = match[2].trim();
-    const away = match[3].trim();
+    const home = cleanTeamName(match[2]);
+    const away = cleanTeamName(match[3]);
     const score = match[4].replace(":", "–");
 
-    matches.push(`${home} ${score} ${away}`);
+    matches.push(`• ${home} **${score}** ${away}`);
   }
 
   const latestMatches = matches.slice(0, 10);
 
-  if (latestMatches.length === 0) {
-    return;
-  }
+  if (latestMatches.length === 0) return;
 
   const message =
     `🏆 **${COMPETITION_NAME} Results**\n\n` +
