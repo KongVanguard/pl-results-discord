@@ -4,6 +4,7 @@ const cheerio = require("cheerio");
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const PAGE_URL = process.env.COMPETITION_URL;
 const COMPETITION_NAME = process.env.COMPETITION_NAME;
+const MANUAL_RUN = process.env.MANUAL_RUN === "true";
 
 if (!DISCORD_WEBHOOK_URL) throw new Error("Missing DISCORD_WEBHOOK_URL");
 if (!PAGE_URL) throw new Error("Missing COMPETITION_URL");
@@ -20,6 +21,13 @@ function todayDate() {
     .replaceAll("-", "/");
 }
 
+async function sendMessage(message) {
+  await axios.post(DISCORD_WEBHOOK_URL, {
+    username: `${COMPETITION_NAME} Results`,
+    content: message
+  });
+}
+
 async function main() {
   const today = todayDate();
 
@@ -29,7 +37,12 @@ async function main() {
   const text = $("body").text().replace(/\s+/g, " ");
   const recentOnly = text.split("Recent matches:")[1]?.split("Next matches:")[0];
 
-  if (!recentOnly) return;
+  if (!recentOnly) {
+    if (MANUAL_RUN) {
+      await sendMessage(`✅ ${COMPETITION_NAME} checker ran successfully.\nNo recent match section found.`);
+    }
+    return;
+  }
 
   const regex =
     /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/g;
@@ -49,16 +62,18 @@ async function main() {
     matches.push(`• ${home} **${score}** ${away}`);
   }
 
-  if (matches.length === 0) return;
+  if (matches.length === 0) {
+    if (MANUAL_RUN) {
+      await sendMessage(`✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found today (${today}).`);
+    }
+    return;
+  }
 
   const message =
     `🏆 **${COMPETITION_NAME} Results — ${today}**\n\n` +
     matches.join("\n");
 
-  await axios.post(DISCORD_WEBHOOK_URL, {
-    username: `${COMPETITION_NAME} Results`,
-    content: message
-  });
+  await sendMessage(message);
 }
 
 main();
