@@ -1,61 +1,56 @@
-name: Daily Football Results
+```js
+const axios = require("axios");
+const cheerio = require("cheerio");
 
-on:
-  schedule:
-    - cron: "0 17 * * *"
-  workflow_dispatch:
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const PAGE_URL = process.env.COMPETITION_URL;
+const COMPETITION_NAME = process.env.COMPETITION_NAME;
 
-jobs:
-  premier-league:
-    runs-on: ubuntu-latest
+async function main() {
+  const { data } = await axios.get(PAGE_URL);
 
-    steps:
-      - uses: actions/checkout@v4
+  const $ = cheerio.load(data);
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+  const text = $("body").text();
 
-      - run: npm install
+  const recentOnly =
+    text.split("Recent matches:")[1]?.split("Next matches:")[0];
 
-      - run: node send_results.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/PL/"
-          COMPETITION_NAME: "Premier League"
+  if (!recentOnly) {
+    return;
+  }
 
-  world-cup:
-    runs-on: ubuntu-latest
+  const regex =
+    /(\d{4}\/\d{2}\/\d{2}),\s*\d{1,2}h\d{2}\s+(.+?)\s+-\s+(.+?)\s+(\d+:\d+)/gs;
 
-    steps:
-      - uses: actions/checkout@v4
+  const matches = [];
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+  let match;
 
-      - run: npm install
+  while ((match = regex.exec(recentOnly)) !== null) {
+    const home = match[2].trim();
+    const away = match[3].trim();
+    const score = match[4].replace(":", "–");
 
-      - run: node send_results.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/WC/"
-          COMPETITION_NAME: "World Cup"
+    matches.push(`${home} ${score} ${away}`);
+  }
 
-  champions-league:
-    runs-on: ubuntu-latest
+  const latestMatches = matches.slice(0, 10);
 
-    steps:
-      - uses: actions/checkout@v4
+  // ONLY POST IF MATCHES EXIST
+  if (latestMatches.length === 0) {
+    return;
+  }
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+  const message =
+    `🏆 **${COMPETITION_NAME} Results**\n\n` +
+    latestMatches.join("\n");
 
-      - run: npm install
+  await axios.post(DISCORD_WEBHOOK_URL, {
+    username: `${COMPETITION_NAME} Results`,
+    content: message
+  });
+}
 
-      - run: node send_results.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          COMPETITION_URL: "https://native-stats.org/competition/CL/"
-          COMPETITION_NAME: "Champions League"
+main();
+```
