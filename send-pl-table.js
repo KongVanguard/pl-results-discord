@@ -15,14 +15,17 @@ async function sendMessage(message) {
   });
 }
 
+function pad(text, length) {
+  return String(text).padEnd(length, " ");
+}
+
 async function main() {
   const { data } = await axios.get(PAGE_URL);
   const $ = cheerio.load(data);
 
   const text = $("body").text().replace(/\s+/g, " ");
 
-  const tableOnly =
-    text.split("Table:")[1]?.split("Recent matches:")[0];
+  const tableOnly = text.split("Table:")[1]?.split("Recent matches:")[0];
 
   if (!tableOnly) {
     await sendMessage("⚠️ Premier League table checker ran, but no table was found.");
@@ -36,20 +39,18 @@ async function main() {
   let match;
 
   while ((match = regex.exec(tableOnly)) !== null) {
-    const position = match[1];
-    const team = match[2].trim();
-    const played = match[3];
-    const wins = match[4];
-    const draws = match[5];
-    const losses = match[6];
-    const goalsFor = match[7];
-    const goalsAgainst = match[8];
-    const goalDifference = match[9];
-    const points = match[10];
-
-    rows.push(
-      `${position}. **${team}** — ${points} pts | P${played} W${wins} D${draws} L${losses} | GD ${goalDifference} | ${goalsFor}:${goalsAgainst}`
-    );
+    rows.push({
+      pos: match[1],
+      team: match[2].trim(),
+      mp: match[3],
+      w: match[4],
+      d: match[5],
+      l: match[6],
+      gf: match[7],
+      ga: match[8],
+      gd: match[9],
+      pts: match[10]
+    });
   }
 
   if (rows.length === 0) {
@@ -57,9 +58,19 @@ async function main() {
     return;
   }
 
+  let table = "";
+  table += `${pad("#", 4)}${pad("Club", 22)}${pad("MP", 5)}${pad("W", 4)}${pad("D", 4)}${pad("L", 4)}${pad("GF", 5)}${pad("GA", 5)}${pad("GD", 6)}PTS\n`;
+  table += "---------------------------------------------------------------\n";
+
+  for (const row of rows.slice(0, 20)) {
+    table += `${pad(row.pos, 4)}${pad(row.team, 22)}${pad(row.mp, 5)}${pad(row.w, 4)}${pad(row.d, 4)}${pad(row.l, 4)}${pad(row.gf, 5)}${pad(row.ga, 5)}${pad(row.gd, 6)}${row.pts}\n`;
+  }
+
   const message =
     `📊 **Premier League Table**\n\n` +
-    rows.slice(0, 20).join("\n");
+    "```txt\n" +
+    table +
+    "```";
 
   await sendMessage(message);
 }
