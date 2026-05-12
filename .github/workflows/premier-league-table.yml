@@ -21,3 +21,4 @@ jobs:
       - run: node send-pl-table.js
         env:
           DISCORD_TABLE_WEBHOOK_URL: ${{ secrets.DISCORD_TABLE_WEBHOOK_URL }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
