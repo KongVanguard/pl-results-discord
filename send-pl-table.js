@@ -57,7 +57,7 @@ async function main() {
 
   const message =
     `📊 **Premier League Table**\n` +
-    `🕒 Updated: ${updated} (Vietnam Time)\n\n` +
+    `Updated: ${updated} (Vietnam Time)\n\n` +
     "```txt\n" +
     table +
     "```";
