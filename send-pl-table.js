@@ -12,6 +12,17 @@ function pad(text, length) {
   return String(text).padEnd(length, " ");
 }
 
+function currentTime() {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date());
+}
+
 async function sendMessage(message) {
   await axios.post(DISCORD_WEBHOOK_URL, {
     username: "Premier League Table",
@@ -42,8 +53,11 @@ async function main() {
     table += `${pad(row.position, 4)}${pad(row.team.shortName, 22)}${pad(row.playedGames, 5)}${pad(row.won, 4)}${pad(row.draw, 4)}${pad(row.lost, 4)}${pad(row.goalsFor, 5)}${pad(row.goalsAgainst, 5)}${pad(row.goalDifference, 6)}${row.points}\n`;
   }
 
+  const updated = currentTime();
+
   const message =
-    `📊 **Premier League Table**\n\n` +
+    `📊 **Premier League Table**\n` +
+    `🕒 Updated: ${updated} (Vietnam Time)\n\n` +
     "```txt\n" +
     table +
     "```";
