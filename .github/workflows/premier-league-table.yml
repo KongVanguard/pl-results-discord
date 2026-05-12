@@ -2,7 +2,9 @@ name: Premier League Table
 
 on:
   schedule:
-    - cron: "15 17 * * *"
+    # 02:15 Vietnam time
+    - cron: "15 19 * * *"
+
   workflow_dispatch:
 
 jobs:
