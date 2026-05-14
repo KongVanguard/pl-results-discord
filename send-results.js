@@ -30,6 +30,36 @@ function datesToCheck() {
   return [formatDate(now), formatDate(yesterday)];
 }
 
+function cleanTeamName(name) {
+  let cleaned = name
+    .replace(/\(\d+\)/g, "")
+    .replace(/\b[A-Z]{2,4}\b$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = cleaned.split(" ");
+
+  for (let i = 1; i <= Math.floor(words.length / 2); i++) {
+    const firstPart = words.slice(0, i).join(" ");
+    const secondPart = words.slice(i, i * 2).join(" ");
+
+    if (firstPart === secondPart) {
+      cleaned = firstPart;
+      break;
+    }
+  }
+
+  cleaned = cleaned
+    .replace(/\bFC\b/g, "")
+    .replace(/\bAFC\b/g, "")
+    .replace(/\bCF\b/g, "")
+    .replace(/\bSC\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned;
+}
+
 async function sendMessage(message) {
   const response = await axios.post(DISCORD_WEBHOOK_URL, {
     username: `${COMPETITION_NAME} Results`,
@@ -72,38 +102,27 @@ async function main() {
 
     if (!validDates.includes(date)) continue;
 
-    const home = match[2].trim();
-    const away = match[3].trim();
+    const home = cleanTeamName(match[2]);
+    const away = cleanTeamName(match[3]);
 
     const [homeGoals, awayGoals] = match[4].split(":").map(Number);
-    const score = `${homeGoals}–${awayGoals}`;
 
-    let homeEmoji = "⚪";
-    let awayEmoji = "⚪";
+    const homeEmoji =
+      homeGoals > awayGoals ? "🟢" : homeGoals < awayGoals ? "🔴" : "⚪";
 
-    if (homeGoals > awayGoals) {
-      homeEmoji = "🟢";
-      awayEmoji = "🔴";
-    } else if (awayGoals > homeGoals) {
-      homeEmoji = "🔴";
-      awayEmoji = "🟢";
-    }
+    const awayEmoji =
+      awayGoals > homeGoals ? "🟢" : awayGoals < homeGoals ? "🔴" : "⚪";
 
     if (!matchesByDate[date]) matchesByDate[date] = [];
 
     matchesByDate[date].push(
-      `${homeEmoji} **${home}** ${score} **${away}** ${awayEmoji}`
+      `📅 ${date}\n${homeEmoji} ${home} [${homeGoals} – ${awayGoals}] ${away} ${awayEmoji}`
     );
   }
 
-  const sections = Object.keys(matchesByDate)
-    .sort()
-    .reverse()
-    .map(date => {
-      return `📅 **${date}**\n${matchesByDate[date].join("\n")}`;
-    });
+  const dates = Object.keys(matchesByDate).sort().reverse();
 
-  if (sections.length === 0) {
+  if (dates.length === 0) {
     if (MANUAL_RUN) {
       await sendMessage(
         `✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found for ${validDates.join(" or ")}.`
@@ -114,7 +133,9 @@ async function main() {
 
   const message =
     `🏆 **${COMPETITION_NAME} Results**\n\n` +
-    sections.join("\n\n");
+    dates
+      .map(date => matchesByDate[date].join("\n\n"))
+      .join("\n\n");
 
   await sendMessage(message);
 }
