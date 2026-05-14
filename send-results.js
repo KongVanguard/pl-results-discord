@@ -13,9 +13,9 @@ if (!COMPETITION_NAME) throw new Error("Missing COMPETITION_NAME");
 function formatDate(date) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/London",
-    year: "numeric",
+    day: "2-digit",
     month: "2-digit",
-    day: "2-digit"
+    year: "numeric"
   })
     .format(date)
     .replaceAll("-", "/");
