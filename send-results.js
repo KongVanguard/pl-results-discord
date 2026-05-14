@@ -10,15 +10,20 @@ if (!DISCORD_WEBHOOK_URL) throw new Error("Missing DISCORD_WEBHOOK_URL");
 if (!PAGE_URL) throw new Error("Missing COMPETITION_URL");
 if (!COMPETITION_NAME) throw new Error("Missing COMPETITION_NAME");
 
-function formatDate(date) {
+function websiteDate(date) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/London",
-    day: "2-digit",
+    year: "numeric",
     month: "2-digit",
-    year: "numeric"
+    day: "2-digit"
   })
     .format(date)
     .replaceAll("-", "/");
+}
+
+function displayDateFromWebsiteDate(rawDate) {
+  const [year, month, day] = rawDate.split("/").map(Number);
+  return `${day}/${month}/${year}`;
 }
 
 function datesToCheck() {
@@ -27,7 +32,7 @@ function datesToCheck() {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
 
-  return [formatDate(now), formatDate(yesterday)];
+  return [websiteDate(now), websiteDate(yesterday)];
 }
 
 function cleanTeamName(name) {
@@ -72,7 +77,7 @@ async function sendMessage(message) {
 async function main() {
   const validDates = datesToCheck();
 
-  console.log("Checking dates:", validDates.join(", "));
+  console.log("Checking website dates:", validDates.join(", "));
   console.log("Competition:", COMPETITION_NAME);
   console.log("URL:", PAGE_URL);
 
@@ -98,10 +103,11 @@ async function main() {
   let match;
 
   while ((match = regex.exec(recentOnly)) !== null) {
-    const date = match[1];
+    const rawDate = match[1];
 
-    if (!validDates.includes(date)) continue;
+    if (!validDates.includes(rawDate)) continue;
 
+    const displayDate = displayDateFromWebsiteDate(rawDate);
     const home = cleanTeamName(match[2]);
     const away = cleanTeamName(match[3]);
 
@@ -113,10 +119,10 @@ async function main() {
     const awayEmoji =
       awayGoals > homeGoals ? "🟢" : awayGoals < homeGoals ? "🔴" : "⚪";
 
-    if (!matchesByDate[date]) matchesByDate[date] = [];
+    if (!matchesByDate[rawDate]) matchesByDate[rawDate] = [];
 
-    matchesByDate[date].push(
-      `📅 ${date}\n${homeEmoji} ${home} [${homeGoals} – ${awayGoals}] ${away} ${awayEmoji}`
+    matchesByDate[rawDate].push(
+      `📅 ${displayDate}\n${homeEmoji} ${home} [${homeGoals} – ${awayGoals}] ${away} ${awayEmoji}`
     );
   }
 
@@ -125,7 +131,9 @@ async function main() {
   if (dates.length === 0) {
     if (MANUAL_RUN) {
       await sendMessage(
-        `✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found for ${validDates.join(" or ")}.`
+        `✅ ${COMPETITION_NAME} checker ran successfully.\nNo matches found for ${validDates
+          .map(displayDateFromWebsiteDate)
+          .join(" or ")}.`
       );
     }
     return;
